@@ -1,0 +1,50 @@
+// Run this only once to populate pokedex
+useEffect(() => {
+  const fillPokedex = async () => {
+    const response_list = await fetch(`${API_URL}?limit=12`);
+    const data = await response_list.json();
+    const pokeNames = await data.results.map((pokemon) => pokemon.name);
+
+    const pokemon = await Promise.all(
+      pokeNames.map(async (pokemon) => {
+        const response_pokemon = await fetch(`${API_URL}/${pokemon}`);
+        const data = await response_pokemon.json();
+
+        return {
+          name: data.name,
+          id: data.id,
+          image: data.sprites.other["official-artwork"].front_default,
+          weight: data.weight,
+          height: data.height,
+          hp: data.stats[0]["base_stat"],
+          attack: data.stats[1]["base_stat"],
+          defence: data.stats[2]["base_stat"],
+          specialAttack: data.stats[3]["base_stat"],
+          specialDefence: data.stats[4]["base_stat"],
+          speed: data.stats[5]["base_stat"],
+          type: data.types.map((type) => type.type.name),
+        };
+      })
+    );
+
+    setPokedex(pokemon);
+  };
+
+  fillPokedex();
+}, []);
+
+// useEffect #2
+// useEffect(() => {
+//   console.log("Running useEffect #2");
+//   console.log(`offset = ${offset}`)
+
+//   if (isIntersecting) {
+//     ref.current.querySelectorAll("div").forEach((el) => {
+//       el.classList.add("slide-in");
+//     });
+//   } else {
+//     ref.current.querySelectorAll("div").forEach((el) => {
+//       el.classList.remove("slide-in");
+//     });
+//   }
+// }, [isIntersecting]);
