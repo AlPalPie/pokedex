@@ -4,22 +4,30 @@ import SearchIcon from "./icons8-search.svg";
 import "./Pokedex.css";
 import "./PokemonCard.css";
 
+//setSprite(data.sprites.other["official-artwork"].front_default);
+
 const API_URL = "https://pokeapi.co/api/v2/pokemon";
-const batch = 3; // how many pokemon to fetch from API at a time
+const batch = 6; // how many pokemon to fetch from API at a time
 
 const Pokedex = () => {
   const [pokedex, setPokedex] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [offset, setOffset] = useState(0);
+  const [offset, setOffset] = useState(0); // used as "offset" term in pokeapi fetch
+  const [renderOffset, setRenderOffset] = useState(0);
 
-  const ref = useRef(null);
-  const firstUpdate = useRef(true);
+  const [renderMode, setRenderMode] = useState(0);
+
+  const ref = useRef(null); // used as component for Intersection Observer to observe
+  const firstUpdate = useRef(true); // to prevent duplicate first batch of pokemon from entering the pokedex
+  const stillMorePokemon = useRef(true); // to prevent additional API fetches once there are no more pokemon left
 
   // Intersection Observer for revealing on scroll
   useEffect(() => {
+    console.log("useEffect Observer call");
     const callback = ([entry]) => {
       if (entry.isIntersecting) {
-        setOffset(offset + batch);
+        setRenderOffset(renderOffset + batch);
+        console.log(`renderOffset = ${renderOffset}`);
       }
     };
 
@@ -31,16 +39,19 @@ const Pokedex = () => {
 
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
-  }, [ref, offset]);
+  }, [ref, renderOffset]);
 
-  // Run this only once to populate pokedex
+  // Runs every time offset is changed; used to update pokedex
   useEffect(() => {
+    console.log("useEffect fillPokedex call");
+
     const fillPokedex = async () => {
       const response_list = await fetch(
         `${API_URL}?limit=${batch}&offset=${offset}`
       );
       const data = await response_list.json();
       const pokeNames = await data.results.map((pokemon) => pokemon.name);
+      console.log(`pokeNames = ${pokeNames}`);
 
       const pokemon = await Promise.all(
         pokeNames.map(async (pokemon) => {
@@ -68,11 +79,38 @@ const Pokedex = () => {
     };
 
     if (firstUpdate.current) {
+      console.log("Updating firstUpdate to false");
       firstUpdate.current = false;
       return;
     }
-    fillPokedex();
+
+    if (stillMorePokemon.current) {
+      console.log("stillMorePokemon = true");
+      fillPokedex();
+      console.log(`pokedex.length = ${pokedex.length}`);
+    }
   }, [offset]);
+
+  // Runs everytime pokedex is changed; used to update offset
+  useEffect(() => {
+    console.log("useEffect checkMorePokemon call");
+    const checkMorePokemon = async () => {
+      const api_response = await fetch(
+        `${API_URL}?limit=${batch}&offset=${offset}`
+      );
+      const api_data = await api_response.json();
+
+      if (api_data.results.length === 0) {
+        console.log("Setting stillMorePokemon to false");
+        stillMorePokemon.current = false;
+      } else {
+        console.log(`Setting offset to ${offset} + ${batch}`);
+        setOffset(offset + batch);
+      }
+    };
+
+    checkMorePokemon();
+  }, [pokedex]);
 
   const searchPokemon = async (search) => {
     if (typeof search == "undefined") {
@@ -92,8 +130,6 @@ const Pokedex = () => {
       console.log(pokelist);
 
       setPokedex(pokelist);
-
-      //setSprite(data.sprites.other["official-artwork"].front_default);
     } else {
       const response = await fetch(`${API_URL}/${search}`);
       const data = await response.json();
@@ -102,6 +138,30 @@ const Pokedex = () => {
       console.log(data);
 
       setPokedex([data]);
+    }
+  };
+
+  const renderPokemonCards = (pokedex, mode) => {
+    switch (mode) {
+      case 0:
+        console.log(
+          `render pokedex length = ${pokedex.length} and renderOffset = ${renderOffset}`
+        );
+        const returnValue = pokedex
+          .filter((entry) => entry.id <= renderOffset)
+          .map((pokemon) => <PokemonCard key={pokemon.id} pokemon={pokemon} />);
+
+        console.log(`returnValue.length = ${returnValue.length}`);
+        return returnValue;
+        break;
+      case 1:
+        console.log("DEBUG: Not expected to hit case 1 yet");
+        break;
+      case 2:
+        console.log("DEBUG: Not expected to hit case 2 yet");
+        break;
+      default:
+        console.log("DEBUG: Not expected to hit default case yet");
     }
   };
 
@@ -130,12 +190,8 @@ const Pokedex = () => {
       </div>
 
       <div>
-        {pokedex?.length > 0 ? (
-          <div>
-            {pokedex.map((pokemon) => (
-              <PokemonCard key={pokemon.id} pokemon={pokemon} />
-            ))}
-          </div>
+        {pokedex.length > 0 ? (
+          <div>{renderPokemonCards(pokedex, renderMode)}</div>
         ) : (
           <div className="empty">
             <h2>No Pokemon found.</h2>

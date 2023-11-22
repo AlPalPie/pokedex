@@ -48,3 +48,32 @@ useEffect(() => {
 //     });
 //   }
 // }, [isIntersecting]);
+
+const searchPokemon = async (search) => {
+  if (typeof search == "undefined") {
+    const response = await fetch(`${API_URL}?limit=15`);
+    const data = await response.json();
+
+    console.log(response);
+    console.log(data);
+
+    let pokelist = [];
+    for (let i = 0; i < data.results.length; i++) {
+      const response2 = await fetch(data.results[i].url);
+      const data2 = await response2.json();
+      pokelist.push(data2);
+    }
+
+    console.log(pokelist);
+
+    setPokedex(pokelist);
+  } else {
+    const response = await fetch(`${API_URL}/${search}`);
+    const data = await response.json();
+
+    console.log(response);
+    console.log(data);
+
+    setPokedex([data]);
+  }
+};
