@@ -4,3 +4,16 @@
     margin-left: 50px;
 
 }
+
+.cardId {
+    text-align: right;
+    display: block;
+    background-color: yellow;
+}
+
+
+.cardStat {
+    text-align: left;
+    display: block;
+    background-color: orange;
+}

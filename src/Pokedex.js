@@ -16,6 +16,7 @@ const Pokedex = () => {
   const [renderOffset, setRenderOffset] = useState(0);
 
   const [renderMode, setRenderMode] = useState(0);
+  const [sortStat, setSortStat] = useState("id");
 
   const ref = useRef(null); // used as component for Intersection Observer to observe
   const firstUpdate = useRef(true); // to prevent duplicate first batch of pokemon from entering the pokedex
@@ -23,11 +24,9 @@ const Pokedex = () => {
 
   // Intersection Observer for revealing on scroll
   useEffect(() => {
-    console.log("useEffect Observer call");
     const callback = ([entry]) => {
       if (entry.isIntersecting) {
         setRenderOffset(renderOffset + batch);
-        console.log(`renderOffset = ${renderOffset}`);
       }
     };
 
@@ -43,15 +42,12 @@ const Pokedex = () => {
 
   // Runs every time offset is changed; used to update pokedex
   useEffect(() => {
-    console.log("useEffect fillPokedex call");
-
     const fillPokedex = async () => {
       const response_list = await fetch(
         `${API_URL}?limit=${batch}&offset=${offset}`
       );
       const data = await response_list.json();
       const pokeNames = await data.results.map((pokemon) => pokemon.name);
-      console.log(`pokeNames = ${pokeNames}`);
 
       const pokemon = await Promise.all(
         pokeNames.map(async (pokemon) => {
@@ -79,21 +75,17 @@ const Pokedex = () => {
     };
 
     if (firstUpdate.current) {
-      console.log("Updating firstUpdate to false");
       firstUpdate.current = false;
       return;
     }
 
     if (stillMorePokemon.current) {
-      console.log("stillMorePokemon = true");
       fillPokedex();
-      console.log(`pokedex.length = ${pokedex.length}`);
     }
   }, [offset]);
 
   // Runs everytime pokedex is changed; used to update offset
   useEffect(() => {
-    console.log("useEffect checkMorePokemon call");
     const checkMorePokemon = async () => {
       const api_response = await fetch(
         `${API_URL}?limit=${batch}&offset=${offset}`
@@ -101,7 +93,6 @@ const Pokedex = () => {
       const api_data = await api_response.json();
 
       if (api_data.results.length === 0) {
-        console.log("Setting stillMorePokemon to false");
         stillMorePokemon.current = false;
       } else {
         console.log(`Setting offset to ${offset} + ${batch}`);
@@ -147,16 +138,27 @@ const Pokedex = () => {
         console.log(
           `render pokedex length = ${pokedex.length} and renderOffset = ${renderOffset}`
         );
-        const returnValue = pokedex
+        const returnValue0 = pokedex
           .filter((entry) => entry.id <= renderOffset)
           .map((pokemon) => <PokemonCard key={pokemon.id} pokemon={pokemon} />);
 
-        console.log(`returnValue.length = ${returnValue.length}`);
-        return returnValue;
-        break;
+        console.log(`returnValue.length = ${returnValue0.length}`);
+        return returnValue0;
       case 1:
-        console.log("DEBUG: Not expected to hit case 1 yet");
-        break;
+        console.log(
+          `render pokedex length = ${pokedex.length} and renderOffset = ${renderOffset}`
+        );
+        const returnValue1 = pokedex
+          .sort((a, b) => {
+            return a[sortStat] - b[sortStat];
+          })
+          .filter((_, index) => index < renderOffset)
+          .map((pokemon) => (
+            <PokemonCard key={pokemon.id} pokemon={pokemon} stat={sortStat} />
+          ));
+
+        console.log(`returnValue.length = ${returnValue1.length}`);
+        return returnValue1;
       case 2:
         console.log("DEBUG: Not expected to hit case 2 yet");
         break;
@@ -187,6 +189,29 @@ const Pokedex = () => {
           alt="search"
           onClick={() => searchPokemon(searchTerm)}
         />
+      </div>
+
+      <div>
+        <button
+          value={renderMode}
+          onClick={(e) =>
+            renderMode === 0 ? setRenderMode(1) : setRenderMode(0)
+          }
+        >
+          Toggle Render Mode ({renderMode})
+        </button>
+        <select value={sortStat} onChange={(e) => setSortStat(e.target.value)}>
+          <option value="name">Name</option>
+          <option value="id">ID</option>
+          <option value="weight">Weight</option>
+          <option value="height">Height</option>
+          <option value="hp">HP</option>
+          <option value="attack">Attack</option>
+          <option value="defence">Defence</option>
+          <option value="specialAttack">Special Attack</option>
+          <option value="specialDefence">Special Defense</option>
+          <option value="speed">Speed</option>
+        </select>
       </div>
 
       <div>
