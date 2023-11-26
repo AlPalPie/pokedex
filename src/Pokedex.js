@@ -11,12 +11,14 @@ const batch = 6; // how many pokemon to fetch from API at a time
 
 const Pokedex = () => {
   const [pokedex, setPokedex] = useState([]);
+  const [tempPokedex, setTempPokedex] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [offset, setOffset] = useState(0); // used as "offset" term in pokeapi fetch
   const [renderOffset, setRenderOffset] = useState(0);
 
   const [renderMode, setRenderMode] = useState(0);
   const [sortStat, setSortStat] = useState("id");
+  const [order, setOrder] = useState("ascending");
 
   const ref = useRef(null); // used as component for Intersection Observer to observe
   const firstUpdate = useRef(true); // to prevent duplicate first batch of pokemon from entering the pokedex
@@ -25,17 +27,10 @@ const Pokedex = () => {
   // Intersection Observer for revealing on scroll
   useEffect(() => {
     const callback = ([entry]) => {
-      if (entry.isIntersecting) {
-        setRenderOffset(renderOffset + batch);
-      }
+      if (entry.isIntersecting) { setRenderOffset(renderOffset + batch); }
     };
-
-    const options = {
-      rootMargin: "-10px",
-    };
-
+    const options = { rootMargin: "-10px" };
     const observer = new IntersectionObserver(callback, options);
-
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
   }, [ref, renderOffset]);
@@ -43,9 +38,7 @@ const Pokedex = () => {
   // Runs every time offset is changed; used to update pokedex
   useEffect(() => {
     const fillPokedex = async () => {
-      const response_list = await fetch(
-        `${API_URL}?limit=${batch}&offset=${offset}`
-      );
+      const response_list = await fetch(`${API_URL}?limit=${batch}&offset=${offset}`);
       const data = await response_list.json();
       const pokeNames = await data.results.map((pokemon) => pokemon.name);
 
@@ -95,13 +88,34 @@ const Pokedex = () => {
       if (api_data.results.length === 0) {
         stillMorePokemon.current = false;
       } else {
-        console.log(`Setting offset to ${offset} + ${batch}`);
         setOffset(offset + batch);
       }
     };
 
     checkMorePokemon();
   }, [pokedex]);
+
+
+  useEffect(() => {
+    const updateTempPokedex = () => {
+      switch (sortStat) {
+        case "name": // only name property is a string so we sort this differently
+          setTempPokedex([...pokedex].sort((a, b) => { return (order === "ascending") ? (
+            (a[sortStat].toLowerCase() < b[sortStat].toLowerCase()) ? -1 : 1
+          ) : (
+            (a[sortStat].toLowerCase() < b[sortStat].toLowerCase()) ? 1 : -1
+          )}));
+          break;
+        default:
+          setTempPokedex([...pokedex].sort((a, b) => { return (order === "ascending") ? a[sortStat] - b[sortStat] : b[sortStat] - a[sortStat] }));
+      }
+
+    }
+
+    updateTempPokedex();
+  }, [pokedex, order, sortStat])
+
+
 
   const searchPokemon = async (search) => {
     if (typeof search == "undefined") {
@@ -132,39 +146,17 @@ const Pokedex = () => {
     }
   };
 
-  const renderPokemonCards = (pokedex, mode) => {
-    switch (mode) {
-      case 0:
-        console.log(
-          `render pokedex length = ${pokedex.length} and renderOffset = ${renderOffset}`
-        );
-        const returnValue0 = pokedex
-          .filter((entry) => entry.id <= renderOffset)
-          .map((pokemon) => <PokemonCard key={pokemon.id} pokemon={pokemon} />);
+  // Decides how to render PokemonCards based on dropdown menu setting
+  const renderPokemonCards = (pokedex, order) => {
+    console.log(`render pokedex length = ${pokedex.length} and renderOffset = ${renderOffset}`);
 
-        console.log(`returnValue.length = ${returnValue0.length}`);
-        return returnValue0;
-      case 1:
-        console.log(
-          `render pokedex length = ${pokedex.length} and renderOffset = ${renderOffset}`
-        );
-        const returnValue1 = pokedex
-          .sort((a, b) => {
-            return a[sortStat] - b[sortStat];
-          })
-          .filter((_, index) => index < renderOffset)
-          .map((pokemon) => (
-            <PokemonCard key={pokemon.id} pokemon={pokemon} stat={sortStat} />
-          ));
+    const returnValue = pokedex
+      .filter((_, index) => index < renderOffset)
+      .map((pokemon) => (
+        <PokemonCard key={pokemon.id} pokemon={pokemon} stat={sortStat} />
+      ));
 
-        console.log(`returnValue.length = ${returnValue1.length}`);
-        return returnValue1;
-      case 2:
-        console.log("DEBUG: Not expected to hit case 2 yet");
-        break;
-      default:
-        console.log("DEBUG: Not expected to hit default case yet");
-    }
+    return returnValue;
   };
 
   return (
@@ -184,20 +176,11 @@ const Pokedex = () => {
             }
           }}
         />
-        <img
-          src={SearchIcon}
-          alt="search"
-          onClick={() => searchPokemon(searchTerm)}
-        />
+        <img src={SearchIcon} alt="search" onClick={() => searchPokemon(searchTerm)}/>
       </div>
 
       <div>
-        <button
-          value={renderMode}
-          onClick={(e) =>
-            renderMode === 0 ? setRenderMode(1) : setRenderMode(0)
-          }
-        >
+        <button value={renderMode} onClick={(e) => renderMode === 0 ? setRenderMode(1) : setRenderMode(0)}>
           Toggle Render Mode ({renderMode})
         </button>
         <select value={sortStat} onChange={(e) => setSortStat(e.target.value)}>
@@ -212,11 +195,15 @@ const Pokedex = () => {
           <option value="specialDefence">Special Defense</option>
           <option value="speed">Speed</option>
         </select>
+        <select value={order} onChange={(e) => setOrder(e.target.value)}>
+          <option value="ascending">Ascending</option>
+          <option value="descending">Descending</option>
+        </select>
       </div>
 
       <div>
-        {pokedex.length > 0 ? (
-          <div>{renderPokemonCards(pokedex, renderMode)}</div>
+        {tempPokedex.length > 0 ? (
+          <div>{renderPokemonCards(tempPokedex, order)}</div>
         ) : (
           <div className="empty">
             <h2>No Pokemon found.</h2>
