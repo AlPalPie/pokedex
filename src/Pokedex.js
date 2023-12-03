@@ -31,7 +31,6 @@ const Pokedex = () => {
   const [order, setOrder] = useState("ascending");            // the order used for sorting
 
   const ref = useRef(null);                                   // used as component for Intersection Observer to observe
-  const firstPokedexUpdate = useRef(true);                    // to prevent duplicate first batch of pokemon from entering the pokedex
   const stillMorePokemon = useRef(true);                      // to prevent additional API fetches once there are no more pokemon left
   const maxNumberOfPokemon = useRef(-1);                      // to prevent renderOffset from increasing endlessly if user is sitting at bottom of page
 
@@ -105,11 +104,6 @@ const Pokedex = () => {
 
       console.log(`EXIT fillPokedex: offset = ${offset} pokedex length = ${pokedex.length}`)
     };
-
-    if (firstPokedexUpdate.current) {
-      firstPokedexUpdate.current = false;
-      return;
-    }
 
     if (stillMorePokemon.current) {
       fillPokedex();
@@ -231,7 +225,7 @@ const Pokedex = () => {
             }
           }}
         />
-        <div>
+        <div className="selects">
           <select id="stat-list" className="sort" value={sortStat} onChange={(e) => setSortStat(e.target.value)}>
             <option value="name">Name</option>
             <option value="id">ID</option>

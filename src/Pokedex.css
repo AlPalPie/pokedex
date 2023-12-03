@@ -28,12 +28,19 @@ html body {
     width: 60vw;
 }
 
+.selects {
+    display: flex;
+    justify-content: space-between;
+    width: 60vw;
+}
+
 .sort {
-    width: 30vw;
+    width: 28vw;
 }
 
 .loading {
     box-shadow: 3px 5px 5px rgba(0, 0, 0, 0.3);
+    font-weight: bold;
     height: 15vh;
     margin-bottom: 25px;
     display: flex;

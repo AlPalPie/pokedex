@@ -64,6 +64,15 @@ div {
     font-size: small;
 }
 
+.pokemon-card-bio:after {
+    content: "";
+    background: black;
+    position:absolute;
+    bottom: 23%;
+    width: 95%;
+    height: 0.15rem;
+}
+
 .pokemon-card-stats {
     padding: 1rem;
 }
