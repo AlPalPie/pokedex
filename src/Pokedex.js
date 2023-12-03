@@ -32,7 +32,6 @@ const Pokedex = () => {
 
   const ref = useRef(null);                                   // used as component for Intersection Observer to observe
   const firstPokedexUpdate = useRef(true);                    // to prevent duplicate first batch of pokemon from entering the pokedex
-  const firstOffsetUpdate = useRef(true);                     // to prevent offset from incrementing twice before pokemon are entered into pokedex
   const stillMorePokemon = useRef(true);                      // to prevent additional API fetches once there are no more pokemon left
   const maxNumberOfPokemon = useRef(-1);                      // to prevent renderOffset from increasing endlessly if user is sitting at bottom of page
 
@@ -103,6 +102,10 @@ const Pokedex = () => {
       setPokedex((prev) => [...prev, ...pokemon]);
     };
 
+    console.log("Entering fillPokedex useEffect")
+    console.log(`offset = ${offset}`)
+    console.log(`pokedex length = ${pokedex.length}`)
+
     if (firstPokedexUpdate.current) {
       firstPokedexUpdate.current = false;
       return;
@@ -111,6 +114,12 @@ const Pokedex = () => {
     if (stillMorePokemon.current) {
       fillPokedex();
     }
+
+    console.log("Exiting fillPokedex useEffect")
+    console.log(`offset = ${offset}`)
+    console.log(`pokedex length = ${pokedex.length}`)
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offset]);
 
 
@@ -127,17 +136,21 @@ const Pokedex = () => {
         stillMorePokemon.current = false;
         maxNumberOfPokemon.current = offset;
       } else {
+        console.log("SETTING OFFSET")
         setOffset(offset + batch);
       }
     };
 
-    if (firstOffsetUpdate.current) {
-      firstOffsetUpdate.current = false;
-      return;
-    }
+    console.log("Entering checkMorePokemon useEffect")
+    console.log(`offset = ${offset}`)
+    console.log(`pokedex length = ${pokedex.length}`)
 
     checkMorePokemon();
-    
+  
+    console.log("Exiting checkMorePokemon useEffect")
+    console.log(`offset = ${offset}`)
+    console.log(`pokedex length = ${pokedex.length}`)
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pokedex]);
 
