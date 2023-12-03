@@ -1,6 +1,5 @@
 # Hosted
-
-TBD
+https://powerful-pokeapi-pokedex.netlify.app/
 
 # A Pokedex Created in React
 
