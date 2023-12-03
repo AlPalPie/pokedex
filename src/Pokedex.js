@@ -67,6 +67,8 @@ const Pokedex = () => {
   // Runs every time offset is changed - implemented this way to breakup api calls into smaller chunks
   useEffect(() => {
     const fillPokedex = async () => {
+      console.log(`ENTER fillPokedex: offset = ${offset} pokedex length = ${pokedex.length}`)
+
       const response_list = await fetch(`${API_URL}?limit=${batch}&offset=${offset}`);
       const data = await response_list.json();
       const pokeNames = await data.results.map((pokemon) => pokemon.name);
@@ -100,11 +102,9 @@ const Pokedex = () => {
       );
 
       setPokedex((prev) => [...prev, ...pokemon]);
-    };
 
-    console.log("Entering fillPokedex useEffect")
-    console.log(`offset = ${offset}`)
-    console.log(`pokedex length = ${pokedex.length}`)
+      console.log(`EXIT fillPokedex: offset = ${offset} pokedex length = ${pokedex.length}`)
+    };
 
     if (firstPokedexUpdate.current) {
       firstPokedexUpdate.current = false;
@@ -115,10 +115,6 @@ const Pokedex = () => {
       fillPokedex();
     }
 
-    console.log("Exiting fillPokedex useEffect")
-    console.log(`offset = ${offset}`)
-    console.log(`pokedex length = ${pokedex.length}`)
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offset]);
 
@@ -127,6 +123,7 @@ const Pokedex = () => {
   // Runs everytime pokedex is changed - implemented this way to breakup api calls into smaller chunks
   useEffect(() => {
     const checkMorePokemon = async () => {
+      console.log(`ENTER checkMorePokemon: offset = ${offset} pokedex length = ${pokedex.length}`)
       const api_response = await fetch(
         `${API_URL}?limit=${batch}&offset=${offset}`
       );
@@ -136,20 +133,14 @@ const Pokedex = () => {
         stillMorePokemon.current = false;
         maxNumberOfPokemon.current = offset;
       } else {
-        console.log("SETTING OFFSET")
+        console.log(`SETTING OFFSET to ${offset+batch}`)
         setOffset(offset + batch);
       }
+      console.log(`EXIT checkMorePokemon: offset = ${offset} pokedex length = ${pokedex.length}`)
     };
 
-    console.log("Entering checkMorePokemon useEffect")
-    console.log(`offset = ${offset}`)
-    console.log(`pokedex length = ${pokedex.length}`)
 
     checkMorePokemon();
-  
-    console.log("Exiting checkMorePokemon useEffect")
-    console.log(`offset = ${offset}`)
-    console.log(`pokedex length = ${pokedex.length}`)
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pokedex]);
