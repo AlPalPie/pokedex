@@ -31,7 +31,8 @@ const Pokedex = () => {
   const [order, setOrder] = useState("ascending");            // the order used for sorting
 
   const ref = useRef(null);                                   // used as component for Intersection Observer to observe
-  const firstUpdate = useRef(true);                           // to prevent duplicate first batch of pokemon from entering the pokedex
+  const firstPokedexUpdate = useRef(true);                    // to prevent duplicate first batch of pokemon from entering the pokedex
+  const firstOffsetUpdate = useRef(true);                     // to prevent offset from incrementing twice before pokemon are entered into pokedex
   const stillMorePokemon = useRef(true);                      // to prevent additional API fetches once there are no more pokemon left
   const maxNumberOfPokemon = useRef(-1);                      // to prevent renderOffset from increasing endlessly if user is sitting at bottom of page
 
@@ -98,11 +99,12 @@ const Pokedex = () => {
           };
         })
       );
+
       setPokedex((prev) => [...prev, ...pokemon]);
     };
 
-    if (firstUpdate.current) {
-      firstUpdate.current = false;
+    if (firstPokedexUpdate.current) {
+      firstPokedexUpdate.current = false;
       return;
     }
 
@@ -128,6 +130,11 @@ const Pokedex = () => {
         setOffset(offset + batch);
       }
     };
+
+    if (firstOffsetUpdate.current) {
+      firstOffsetUpdate.current = false;
+      return;
+    }
 
     checkMorePokemon();
     
@@ -197,6 +204,7 @@ const Pokedex = () => {
 
       <div className="filters">
         <input
+          id="name-search"
           className="search"
           placeholder="Search for Pokemon by Name"
           value={nameSearchTerm}
@@ -208,6 +216,7 @@ const Pokedex = () => {
           }}
         />
         <input
+          id="type-search"
           className="search"
           placeholder="Search for Pokemon by Type"
           value={typeSearchTerm}
@@ -219,7 +228,7 @@ const Pokedex = () => {
           }}
         />
         <div>
-          <select className="sort" value={sortStat} onChange={(e) => setSortStat(e.target.value)}>
+          <select id="stat-list" className="sort" value={sortStat} onChange={(e) => setSortStat(e.target.value)}>
             <option value="name">Name</option>
             <option value="id">ID</option>
             <option value="height">Height</option>
@@ -231,7 +240,7 @@ const Pokedex = () => {
             <option value="specialDefense">Special Defense</option>
             <option value="speed">Speed</option>
           </select>
-          <select className="sort" value={order} onChange={(e) => setOrder(e.target.value)}>
+          <select id="sort-order" className="sort" value={order} onChange={(e) => setOrder(e.target.value)}>
             <option value="ascending">Ascending</option>
             <option value="descending">Descending</option>
           </select>
