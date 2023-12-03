@@ -12,6 +12,7 @@ import pokemon_center from  "./images/pokemon_center.png"
 - add a better placeholder image if no image in API
 - add type icons
 - improve text formatting
+- fix footer Loading message
 
 */
 
@@ -129,7 +130,7 @@ const Pokedex = () => {
     };
 
     checkMorePokemon();
-  }, [pokedex]);
+  }, [pokedex, offset]);
 
 
   // reset the renderOffset after every time user changes how the pokemon are rendered, to avoid loading all pokemon all the time once youve reached the max
@@ -173,7 +174,6 @@ const Pokedex = () => {
 
   // Render the first 'renderOffset' number of pokemon from the input pokedex as PokemonCards
   const renderPokemonCards = (pokedex, order) => {
-    console.log(`render pokedex length = ${pokedex.length} and renderOffset = ${renderOffset}`);
 
     const returnValue = pokedex
       .filter((_, index) => index < renderOffset)
@@ -201,7 +201,7 @@ const Pokedex = () => {
           onChange={(e) => setNameSearchTerm(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
-              console.log("Pressed Enter");
+              // FIXME: console.log("Pressed Enter");
             }
           }}
         />
@@ -212,7 +212,7 @@ const Pokedex = () => {
           onChange={(e) => setTypeSearchTerm(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
-              console.log("Pressed Enter");
+              // FIXME: console.log("Pressed Enter");
             }
           }}
         />

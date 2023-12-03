@@ -49,7 +49,7 @@ html body {
 }
 
 .slide-out {
-    transform: translateX(-50%) !important;
-    opacity: 1 !important;
+    transform: translateX(0) !important;
+    opacity: 0 !important;
 }
 

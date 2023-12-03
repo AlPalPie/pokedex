@@ -1,5 +1,5 @@
 import React from "react";
-import fireIcon from "./images/fire.svg";
+//import fireIcon from "./images/fire.svg";
 
 
 
