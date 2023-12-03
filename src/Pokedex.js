@@ -130,7 +130,9 @@ const Pokedex = () => {
     };
 
     checkMorePokemon();
-  }, [pokedex, offset]);
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pokedex]);
 
 
   // reset the renderOffset after every time user changes how the pokemon are rendered, to avoid loading all pokemon all the time once youve reached the max
