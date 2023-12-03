@@ -1,41 +1,69 @@
 import { useState, useEffect, useRef } from "react";
 import PokemonCard from "./PokemonCard";
-import SearchIcon from "./icons8-search.svg";
 import "./Pokedex.css";
 import "./PokemonCard.css";
+import "./types.css";
+import pokemon_center from  "./images/pokemon_center.png"
 
-//setSprite(data.sprites.other["official-artwork"].front_default);
+/* TODOs:
+
+- add a "waiting/loading" message that will prevent rendering until ALL pokeapi fetches have been completed when user tries to sort by other stats or search
+- add a scroll back to top button at end of page
+- add a better placeholder image if no image in API
+- add type icons
+- improve text formatting
+
+*/
 
 const API_URL = "https://pokeapi.co/api/v2/pokemon";
 const batch = 6; // how many pokemon to fetch from API at a time
 
 const Pokedex = () => {
-  const [pokedex, setPokedex] = useState([]);
-  const [tempPokedex, setTempPokedex] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [offset, setOffset] = useState(0); // used as "offset" term in pokeapi fetch
-  const [renderOffset, setRenderOffset] = useState(0);
+  const [pokedex, setPokedex] = useState([]);                 // stores all pokeapi data, updated continuously in batches until no more pokemon left, wont be updated anymore afterwards
+  const [tempPokedex, setTempPokedex] = useState([]);         // subset of the pokedex used for rendering which is updated everytime end user changes how they want to view the pokemon
+  const [nameSearchTerm, setNameSearchTerm] = useState("");   // tracks end user's name search terms
+  const [typeSearchTerm, setTypeSearchTerm] = useState("");   // tracks end user's type search terms
+  const [offset, setOffset] = useState(0);                    // used as "offset" term in pokeapi fetch
+  const [renderOffset, setRenderOffset] = useState(0);        // tracks how much of the tempPokedex to render on screen, increases as user scrolls to bottom of page 
 
-  const [renderMode, setRenderMode] = useState(0);
-  const [sortStat, setSortStat] = useState("id");
-  const [order, setOrder] = useState("ascending");
+  const [sortStat, setSortStat] = useState("id");             // represents a pokemon stat which is used for sorting
+  const [order, setOrder] = useState("ascending");            // the order used for sorting
 
-  const ref = useRef(null); // used as component for Intersection Observer to observe
-  const firstUpdate = useRef(true); // to prevent duplicate first batch of pokemon from entering the pokedex
-  const stillMorePokemon = useRef(true); // to prevent additional API fetches once there are no more pokemon left
+  const ref = useRef(null);                                   // used as component for Intersection Observer to observe
+  const firstUpdate = useRef(true);                           // to prevent duplicate first batch of pokemon from entering the pokedex
+  const stillMorePokemon = useRef(true);                      // to prevent additional API fetches once there are no more pokemon left
+  const maxNumberOfPokemon = useRef(-1);                      // to prevent renderOffset from increasing endlessly if user is sitting at bottom of page
+
+
+
+
+
 
   // Intersection Observer for revealing on scroll
   useEffect(() => {
     const callback = ([entry]) => {
-      if (entry.isIntersecting) { setRenderOffset(renderOffset + batch); }
+      if (entry.isIntersecting && (maxNumberOfPokemon.current < 0 || renderOffset < maxNumberOfPokemon.current)) {
+        setRenderOffset(renderOffset + batch);
+      }
+
+      if (entry.isIntersecting && maxNumberOfPokemon.current > 0) {
+        ref.current.querySelectorAll("div").forEach((elem) => {
+          elem.classList.add("slide-out");
+        })
+      }
     };
-    const options = { rootMargin: "-10px" };
+    const options = {
+      threshold: 0,         // only the edge of the observed object needs to be in viewport for intersection to be triggered
+      rootMargin: "50%"     // increases the margin of the observed object that triggers an intersection
+    };
     const observer = new IntersectionObserver(callback, options);
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
   }, [ref, renderOffset]);
 
-  // Runs every time offset is changed; used to update pokedex
+
+  // Adds pokeapi data to the pokedex state
+  // Runs every time offset is changed - implemented this way to breakup api calls into smaller chunks
   useEffect(() => {
     const fillPokedex = async () => {
       const response_list = await fetch(`${API_URL}?limit=${batch}&offset=${offset}`);
@@ -47,23 +75,28 @@ const Pokedex = () => {
           const response_pokemon = await fetch(`${API_URL}/${pokemon}`);
           const data = await response_pokemon.json();
 
+          const image = ( data.sprites.other["official-artwork"].front_default == null ) ? (
+            "https://via.placeholder.com/400"
+          ) : (
+            data.sprites.other["official-artwork"].front_default
+          )
+
           return {
             name: data.name,
             id: data.id,
-            image: data.sprites.other["official-artwork"].front_default,
-            weight: data.weight,
+            image: image,
             height: data.height,
+            weight: data.weight,
             hp: data.stats[0]["base_stat"],
             attack: data.stats[1]["base_stat"],
-            defence: data.stats[2]["base_stat"],
+            defense: data.stats[2]["base_stat"],
             specialAttack: data.stats[3]["base_stat"],
-            specialDefence: data.stats[4]["base_stat"],
+            specialDefense: data.stats[4]["base_stat"],
             speed: data.stats[5]["base_stat"],
             type: data.types.map((type) => type.type.name),
           };
         })
       );
-
       setPokedex((prev) => [...prev, ...pokemon]);
     };
 
@@ -77,7 +110,9 @@ const Pokedex = () => {
     }
   }, [offset]);
 
-  // Runs everytime pokedex is changed; used to update offset
+
+  // Increases the offset, but stops when no more pokemon data retrieved from pokeapi
+  // Runs everytime pokedex is changed - implemented this way to breakup api calls into smaller chunks
   useEffect(() => {
     const checkMorePokemon = async () => {
       const api_response = await fetch(
@@ -87,6 +122,7 @@ const Pokedex = () => {
 
       if (api_data.results.length === 0) {
         stillMorePokemon.current = false;
+        maxNumberOfPokemon.current = offset;
       } else {
         setOffset(offset + batch);
       }
@@ -96,57 +132,46 @@ const Pokedex = () => {
   }, [pokedex]);
 
 
+  // reset the renderOffset after every time user changes how the pokemon are rendered, to avoid loading all pokemon all the time once youve reached the max
+  useEffect(() => {
+    setRenderOffset(0)
+  }, [order, sortStat, nameSearchTerm])
+
+
+  // Updates the tempPokedex based off of the static pokedex
+  // This gets completely rewritten everytime end user changes how they want to view the pokemon
   useEffect(() => {
     const updateTempPokedex = () => {
+
+      let tempTempPokedex = [...pokedex]
+
+      if (nameSearchTerm !== "") {
+        tempTempPokedex = tempTempPokedex.filter(pokemon => pokemon.name.match(nameSearchTerm.toLowerCase()))
+      }
+
+      if (typeSearchTerm !== "") {
+        tempTempPokedex = tempTempPokedex.filter(pokemon => pokemon.type.some( (type) => type.match(typeSearchTerm.toLowerCase()) ))
+      }
+
       switch (sortStat) {
         case "name": // only name property is a string so we sort this differently
-          setTempPokedex([...pokedex].sort((a, b) => { return (order === "ascending") ? (
+          setTempPokedex(tempTempPokedex.sort((a, b) => { return (order === "ascending") ? (
             (a[sortStat].toLowerCase() < b[sortStat].toLowerCase()) ? -1 : 1
           ) : (
             (a[sortStat].toLowerCase() < b[sortStat].toLowerCase()) ? 1 : -1
           )}));
           break;
         default:
-          setTempPokedex([...pokedex].sort((a, b) => { return (order === "ascending") ? a[sortStat] - b[sortStat] : b[sortStat] - a[sortStat] }));
+          setTempPokedex(tempTempPokedex.sort((a, b) => { return (order === "ascending") ? a[sortStat] - b[sortStat] : b[sortStat] - a[sortStat] }));
       }
 
     }
 
     updateTempPokedex();
-  }, [pokedex, order, sortStat])
+  }, [pokedex, order, sortStat, nameSearchTerm, typeSearchTerm])
 
 
-
-  const searchPokemon = async (search) => {
-    if (typeof search == "undefined") {
-      const response = await fetch(`${API_URL}?limit=15`);
-      const data = await response.json();
-
-      console.log(response);
-      console.log(data);
-
-      let pokelist = [];
-      for (let i = 0; i < data.results.length; i++) {
-        const response2 = await fetch(data.results[i].url);
-        const data2 = await response2.json();
-        pokelist.push(data2);
-      }
-
-      console.log(pokelist);
-
-      setPokedex(pokelist);
-    } else {
-      const response = await fetch(`${API_URL}/${search}`);
-      const data = await response.json();
-
-      console.log(response);
-      console.log(data);
-
-      setPokedex([data]);
-    }
-  };
-
-  // Decides how to render PokemonCards based on dropdown menu setting
+  // Render the first 'renderOffset' number of pokemon from the input pokedex as PokemonCards
   const renderPokemonCards = (pokedex, order) => {
     console.log(`render pokedex length = ${pokedex.length} and renderOffset = ${renderOffset}`);
 
@@ -161,44 +186,54 @@ const Pokedex = () => {
 
   return (
     <>
-      <div className="title">
-        <h1>The Bestest Pokedex in the World</h1>
+      <div>
+        <img  className="header-image" src={pokemon_center} alt=""></img>
+      </div>
+      <div className="header">
+        <p>Pokedex</p>
       </div>
 
-      <div className="search">
+      <div className="filters">
         <input
-          placeholder="Search for Pokemon"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search"
+          placeholder="Search for Pokemon by Name"
+          value={nameSearchTerm}
+          onChange={(e) => setNameSearchTerm(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
-              searchPokemon(searchTerm);
+              console.log("Pressed Enter");
             }
           }}
         />
-        <img src={SearchIcon} alt="search" onClick={() => searchPokemon(searchTerm)}/>
-      </div>
-
-      <div>
-        <button value={renderMode} onClick={(e) => renderMode === 0 ? setRenderMode(1) : setRenderMode(0)}>
-          Toggle Render Mode ({renderMode})
-        </button>
-        <select value={sortStat} onChange={(e) => setSortStat(e.target.value)}>
-          <option value="name">Name</option>
-          <option value="id">ID</option>
-          <option value="weight">Weight</option>
-          <option value="height">Height</option>
-          <option value="hp">HP</option>
-          <option value="attack">Attack</option>
-          <option value="defence">Defence</option>
-          <option value="specialAttack">Special Attack</option>
-          <option value="specialDefence">Special Defense</option>
-          <option value="speed">Speed</option>
-        </select>
-        <select value={order} onChange={(e) => setOrder(e.target.value)}>
-          <option value="ascending">Ascending</option>
-          <option value="descending">Descending</option>
-        </select>
+        <input
+          className="search"
+          placeholder="Search for Pokemon by Type"
+          value={typeSearchTerm}
+          onChange={(e) => setTypeSearchTerm(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              console.log("Pressed Enter");
+            }
+          }}
+        />
+        <div>
+          <select className="sort" value={sortStat} onChange={(e) => setSortStat(e.target.value)}>
+            <option value="name">Name</option>
+            <option value="id">ID</option>
+            <option value="height">Height</option>
+            <option value="weight">Weight</option>
+            <option value="hp">HP</option>
+            <option value="attack">Attack</option>
+            <option value="defense">Defense</option>
+            <option value="specialAttack">Special Attack</option>
+            <option value="specialDefense">Special Defense</option>
+            <option value="speed">Speed</option>
+          </select>
+          <select className="sort" value={order} onChange={(e) => setOrder(e.target.value)}>
+            <option value="ascending">Ascending</option>
+            <option value="descending">Descending</option>
+          </select>
+        </div>
       </div>
 
       <div>

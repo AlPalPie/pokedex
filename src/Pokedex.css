@@ -1,67 +1,36 @@
-/* Attribute Bank
+html body {
+    background: #effdfddb;
+}
 
-    Transition: all ease-in 1s;
-    align-items: center;
-    animation: App-logo-spin infinite 20s linear;
-    background-color: #282c34;
-    border: 2px solid #999;
-    box-shadow: 3px 5px 5px rgba(0, 0, 0, 0.3);
-    box-sizing: border-box;
-    color: white;
+.header {
+    font-size: xx-large;
+    font-weight: bold;
+    text-align: center;
+}
+
+.header-image {
+    width: 10rem;
+    height: 8rem;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.filters {
     display: flex;
     flex-direction: column;
-    font-size: calc(10px + 2vmin);
-    gap: 50px;
-    height: 5vh;
-    justify-content: center;
-    margin-bottom: 25px;
-    margin-top: 25px;
-    min-height: 100vh;
-    opacity: 1 !important;
-    overflow: hidden;
-    padding: 50px;
-    pointer-events: none;
-    text-align: center;
-    transform: translateX(-150%);
-    transform: translateX(0) !important;
-
-*/
-
-.title {
-    text-align: center;
+    align-items: center;
+    align-content: flex-start;
+    gap: 0.5rem;
 }
 
 .search {
-    text-align: center;
-}
-  
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+    width: 60vw;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-.App-logo {
-    animation: App-logo-spin infinite 20s linear;
+.sort {
+    width: 30vw;
 }
-}
-
-.App-header {
-    background-color: #282c34;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
 
 .loading {
     box-shadow: 3px 5px 5px rgba(0, 0, 0, 0.3);
@@ -76,11 +45,11 @@
     overflow: hidden;
     Transition: all ease-in 1s;
     opacity: 1;
-    transform: translateX(-150%);
+    transform: translateX(0%);
 }
 
-.slide-in {
-    transform: translateX(0) !important;
+.slide-out {
+    transform: translateX(-50%) !important;
     opacity: 1 !important;
 }
 

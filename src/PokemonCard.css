@@ -1,19 +1,94 @@
-.PokemonCard {
-    text-align: center;
+div {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+
+.pokemon-card {
     display: inline-block;
-    margin-left: 50px;
-
+    border: 0.75rem solid rgb(255,204,0);
+    margin: 2rem;
 }
 
-.cardId {
-    text-align: right;
-    display: block;
-    background-color: yellow;
+.pokemon-card-grid {
+    width: 20rem;
+    height: 30rem;
+    display: grid;
+    grid: 1fr 4fr 1fr 4fr / 3fr 1fr 3fr 1fr;
+    grid-template-areas:
+        "header  header  header  header"
+        "image   image   image   image"
+        "bio     bio     bio     bio"
+        "stats-1 stats-2 stats-3 stats-4";
 }
 
+.pokemon-card-header {
+    grid-area: header;
+    grid-row: 1 / 2;
+    grid-column: 1 / 5;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    font-weight:bold;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    padding-top: 0.25rem;
+}
 
-.cardStat {
-    text-align: left;
-    display: block;
-    background-color: orange;
+.pokemon-card-image-wrapper {
+    grid-area: image;
+    grid-row: 2 / 3;
+    grid-column: 1 / 5;
+    max-width: 100%;
+    max-height: 100%;
+    border: 0.25rem solid rgba(255, 225, 0);
+    margin-left: 0.75rem;
+    margin-right: 0.75rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+    background-size: cover;
+    background-color:antiquewhite ;
+}
+
+.pokemon-card-image {
+    max-width: 100%;
+}
+
+.pokemon-card-bio {
+    grid-area: bio;
+    grid-row: 3 / 4;
+    grid-column: 1 / 5;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    padding: 0.5rem;
+    font-size: small;
+}
+
+.pokemon-card-stats {
+    padding: 0.5rem;
+}
+
+.pokemon-card-stats-1 {
+    grid-area: stats-1;
+    grid-row: 4 / 5;
+    grid-column: 1 / 2;
+}
+.pokemon-card-stats-2 {
+    grid-area: stats-2;
+    grid-row: 4 / 5;
+    grid-column: 2 / 3;
+}
+.pokemon-card-stats-3 {
+    grid-area: stats-3;
+    grid-row: 4 / 5;
+    grid-column: 3 / 4;
+}
+.pokemon-card-stats-4 {
+    grid-area: stats-4;
+    grid-row: 4 / 5;
+    grid-column: 4 / 5;
+}
+
+.pokemon-type-icon {
+    object-fit: contain;
 }
