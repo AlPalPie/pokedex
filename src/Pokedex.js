@@ -216,7 +216,7 @@ const Pokedex = () => {
         <input
           id="type-search"
           className="search"
-          placeholder="Search for Pokemon by Type"
+          placeholder="Search for Pokemon by Type (e.g. Fire, Water, Electric, Grass, Ground)"
           value={typeSearchTerm}
           onChange={(e) => setTypeSearchTerm(e.target.value)}
           onKeyDown={(e) => {
